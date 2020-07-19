@@ -7,6 +7,8 @@ env/
 
 .idea/
 
+resources/
+
 # C extensions
 *.so
 

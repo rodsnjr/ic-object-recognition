@@ -1,5 +1,4 @@
 aioboto3
 config-client
-tensorflow
 faust
 asyncpg

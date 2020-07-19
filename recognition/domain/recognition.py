@@ -17,3 +17,6 @@ class ObjectRecognition:
     created_time = datetime
     predictions = List[Prediction]
 
+    def has_predictions(self, labels: List[str]):
+        return any(map(lambda x: x.label in labels, self.predictions))
+

@@ -26,8 +26,8 @@ def idempotence(event: CatalogEvent):
 
 @app.agent(catalog_topic)
 async def catalog_consumer(stream):
-    async for catalog_event in stream.filter(subject)\
-                                     .filter(idempotence):
+    async for catalog_event in stream.filter(subject) \
+            .filter(idempotence):
         try:
             print(f'CatalogEvent {catalog_event.uid} Consumed')
             processed: ProcessedCatalog = await catalog.process_catalog_event(catalog_event)
@@ -38,16 +38,16 @@ async def catalog_consumer(stream):
             if processed.forward_catalog():
                 print('Forwarding Event Children')
                 await catalog_topic.send(key=processed.catalog_event.uid,
-                                   value=processed.catalog_event)
+                                         value=processed.catalog_event)
         except Exception as e:
             # Might retry, or go to DLQ
             retry = exception.handle_exceptions(catalog_event, e)
             if retry:
                 await catalog_topic.send(key=catalog_event.uid,
-                                   value=catalog_event)
+                                         value=catalog_event)
             else:
                 await catalog_topic_dlq.send(key=catalog_event.uid,
-                                       value=catalog_event)
+                                             value=catalog_event)
 
 
 if __name__ == '__main__':
