@@ -1,10 +1,13 @@
 from typing import List
 
-from tflite_runtime.interpreter import Interpreter
 import numpy as np
+from tflite_runtime.interpreter import Interpreter
 from recognition.domain import ObjectRecognition, Prediction
+from recognition.domain import ObjectRecognitionEntity
 from recognition.providers import Resource
 import time
+from datetime import datetime
+from recognition import util
 
 
 # InceptionV4 Model with TFLite
@@ -101,10 +104,31 @@ class Inception:
         return list(self._process_output())
 
 
-def recognize(image) -> ObjectRecognition:
-    pass
+model = Inception()
+
+
+def _to_entity(object_recognition: ObjectRecognition) -> ObjectRecognitionEntity:
+    return ObjectRecognitionEntity(
+        uid=object_recognition.uid,
+        event_id=object_recognition.event_id,
+        catalog_id=object_recognition.catalog_id,
+        created_time=object_recognition.created_time,
+        predictions=object_recognition.predictions_json()
+    )
+
+
+def recognize(image, catalod_id, event_id) -> ObjectRecognition:
+    predictions = model.predict(image)
+    return ObjectRecognition(
+        uid=util.generate_uid(),
+        catalog_id=catalod_id,
+        event_id=event_id,
+        predictions=list(predictions),
+        created_time=datetime.now()
+    )
 
 
 async def save(object_recognition: ObjectRecognition):
-    pass
+    entity = _to_entity(object_recognition)
+    await entity.save()
 

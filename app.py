@@ -39,6 +39,8 @@ async def catalog_consumer(stream):
                 print('Forwarding Event Children')
                 await catalog_topic.send(key=processed.catalog_event.uid,
                                          value=processed.catalog_event)
+            print('Adding to Idempotence Cache')
+            await catalog.add_processed(catalog_event)
         except Exception as e:
             # Might retry, or go to DLQ
             retry = exception.handle_exceptions(catalog_event, e)

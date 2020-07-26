@@ -3,6 +3,9 @@ from recognition.event import CatalogEvent, CatalogChildEvent
 from recognition.event import ResponseEvent, ResponseStatus
 from recognition.domain import ProcessedCatalog
 from recognition.domain import ObjectRecognition
+from recognition.providers import cache_client, file_client
+from PIL import Image
+from io import BytesIO
 from . import recognition as recognition
 
 
@@ -36,19 +39,25 @@ def _build_forward_catalog(catalog_event: CatalogEvent) -> CatalogEvent | None:
 
 
 def has_processed(catalog_event: CatalogEvent) -> bool:
-    return True
+    return cache_client.get(catalog_event.uid) is not None
 
 
-async def load_image(key):
+def add_processed(catalog_event: CatalogEvent):
     pass
+
+
+async def _load_image(key):
+    img_bytes = await file_client.download_bytes(key)
+    image = Image.open(BytesIO(img_bytes))
+    return image
 
 
 async def process_catalog_event(catalog_event: CatalogEvent) -> ProcessedCatalog:
     # Object Recognition
-    img = await load_image(catalog_event.image_key)
-    object_recognition = recognition.recognize(img)
-    object_recognition.catalog_id = catalog_event.catalog_id
-    object_recognition.event_id = catalog_event.uid
+    img = await _load_image(catalog_event.image_key)
+    object_recognition = recognition.recognize(image=img,
+                                               catalod_id=catalog_event.catalog_id,
+                                               event_id=catalog_event.uid)
     await recognition.save(object_recognition)
 
     # Forward Events
